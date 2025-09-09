@@ -1,71 +1,68 @@
-### Carbon Aware ML (multi-region)
+### Carbon Aware ML
 
-Carbon-aware training for PyTorch that pauses or schedules training based on real-time grid carbon intensity (and optionally electricity prices). Works in any region supported by Electricity Maps or WattTime. Users supply their own API credentials and desired region.
+Carbon-aware training for PyTorch that pauses or schedules training based on real-time grid carbon intensity (and optionally electricity prices). Works in any region supported by Electricity Maps or WattTime. Each user supplies their own API credentials and region.
 
 #### Installation
 
 ```bash
-pip install -e .
-# Optional extras
-pip install -e '.[scheduler]'
-pip install -e '.[tensorboard]'
-pip install -e '.[all]'
+pip install 'carbonaware-ml[all]'         # includes scheduler + tensorboard extras
+# or minimal
+pip install carbonaware-ml
+
+# zsh users: extras must be quoted
 ```
 
-#### Quickstart
+#### Configure environment
+
+```bash
+export CARBONAWARE_REGION="CA-ON"                 # your authorized zone (e.g., US-CAL-CISO, DE)
+export ELECTRICITYMAPS_API_TOKEN="<your_token>"   # required for Electricity Maps
+# Optional if your plan requires Basic Auth
+export ELECTRICITYMAPS_EMAIL="you@example.com"
+
+# Optional WattTime instead of Electricity Maps
+# export WATTTIME_USERNAME="<user>"
+# export WATTTIME_PASSWORD="<pass>"
+```
+
+#### Quickstart (Python)
 
 ```python
+import os
 from carbonaware_ml import CarbonAwareTrainer, providers
 
+# model/optimizer/dataloader are your own objects
 trainer = CarbonAwareTrainer(
     model=my_model,
     optimizer=my_optimizer,
     dataloader=my_dataloader,
-    region=os.environ.get("CARBONAWARE_REGION", "CA-ON"),
+    region=os.environ.get("CARBONAWARE_REGION"),
     carbon_provider=providers.ElectricityMapsProvider(),
 )
 
-# Block until grid intensity is green enough, then train
+# Start only when favorable
 trainer.train_until_green(threshold=200, num_epochs=3)
 
-# Or always-on training but pausing when above threshold
+# Or train now, pausing when conditions exceed thresholds
 trainer.train(num_epochs=3, threshold=200, check_interval_s=300)
-```
-
-You can also import via `carbonaware_ml`:
-
-```python
-from carbonaware_ml import CarbonAwareTrainer
 ```
 
 Providers:
 - Electricity Maps (real-time/forecast carbon intensity)
-  - Set credentials via environment:
-    - `ELECTRICITYMAPS_API_TOKEN` (required)
-    - `ELECTRICITYMAPS_EMAIL` (optional; enables Basic Auth fallback if your plan requires it)
-- WattTime (alternative intensity source)
-- Ontario TOU price provider (demo, no API key)
+  - Env: `ELECTRICITYMAPS_API_TOKEN` (required), `ELECTRICITYMAPS_EMAIL` (optional for Basic Auth)
+- WattTime (alternative intensity source via `WATTTIME_USERNAME`/`WATTTIME_PASSWORD`)
 
 If no external provider is configured, the trainer defaults to an "always-allow" mode.
-
-#### Environment
-
-- `CARBONAWARE_REGION`: your region/zone (e.g., `CA-ON`, `US-CAL-CISO`, `DE`)
-- `ELECTRICITYMAPS_API_TOKEN`: Electricity Maps API token
-- `ELECTRICITYMAPS_EMAIL`: your Electricity Maps account email (if Basic Auth is needed)
-
-#### License
-
-MIT
 
 #### CLI
 
 ```bash
-carbonaware intensity --region CA-ON          # or set CARBONAWARE_REGION
-carbonaware price --region CA-ON
+# Use env region or pass explicitly
+carbonaware intensity --region "$CARBONAWARE_REGION"
+carbonaware price --region "$CARBONAWARE_REGION"
 ```
 
-#### TensorBoard
+#### TensorBoard (optional)
 
 ```python
 trainer = CarbonAwareTrainer(..., tb_log_dir="runs/demo")
@@ -74,8 +71,14 @@ trainer = CarbonAwareTrainer(..., tb_log_dir="runs/demo")
 #### Scheduler (optional)
 
 ```python
-from carbonaware_ontario.scheduler import run_when_favorable
+from carbonaware_ml.scheduler import run_when_favorable
 sched = run_when_favorable(trainer, num_epochs=1, threshold=150, price_threshold_cents=12.0, check_interval_s=300)
 ```
 
+#### Author
 
+- Tom Almog (https://github.com/tomalmog)
+
+#### License
+
+MIT
