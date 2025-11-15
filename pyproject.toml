@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "carbonaware-ml"
-version = "0.1.0"
+version = "0.1.1"
 description = "Carbon-aware PyTorch training plugin (multi-region via Electricity Maps/WattTime)."
 readme = "README.md"
 license = "MIT"
@@ -49,7 +49,7 @@ Issues = "https://github.com/tomalmog/carbonaware-ml/issues"
 
 [project]
 name = "carbonaware-ml"
-version = "0.1.0"
+version = "0.1.1"
 description = "Carbon-aware PyTorch training plugin (multi-region via Electricity Maps/WattTime)."
 readme = "README.md"
 requires-python = ">=3.9"
